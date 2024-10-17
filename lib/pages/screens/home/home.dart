@@ -152,7 +152,6 @@ class LeaderboardSection extends StatelessWidget {
                   onTap: () {
                         Navigator.push(context, MaterialPageRoute(builder: (context) => const MusicPlayerScreen(),));} ,
                   child: CustomMusic(icon: Icons.circle,img:Asset.bgImageMusic,rank: "$index",nameMusic: "Let Me Down Slowly",singer: "Sơn Tùng",onMorePressed: () {
-
                   },));
             },),
       ],

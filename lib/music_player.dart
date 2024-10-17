@@ -24,3 +24,10 @@ class MusicPlayerProvider with ChangeNotifier {
     notifyListeners();
   }
 }
+
+
+
+
+
+
+

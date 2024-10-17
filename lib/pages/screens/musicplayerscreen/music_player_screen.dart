@@ -168,8 +168,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Icon(Icons.shuffle,size: 25, color:context.theme.iconTheme.color,
-                    ),
+                    Icon(Icons.shuffle,size: 25, color:context.theme.iconTheme.color,),
                     const Spacer(),
                     Icon(Icons.skip_previous,size: 30,color: context.theme.iconTheme.color?.withOpacity(0.7)),
                     SizedBox(width: context.width*0.01,),
