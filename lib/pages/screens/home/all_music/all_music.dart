@@ -1,4 +1,5 @@
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:music_app/core/size/size.dart';
 import 'package:music_app/core/themes/theme_extensions.dart';
@@ -52,23 +53,51 @@ class AllMusic extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: context.height*0.02,),
-                SizedBox(
-                  // height: context.height*0.75,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    primary: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: 8,
-                    itemBuilder: (context, index) {
-                      return InkWell(
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => const MusicPlayerScreen(),));
-                          } ,
-                          child: CustomMusic(icon: Icons.circle,img:Asset.bgImageMusic,rank: "$index",nameMusic: "Let Me Down Slowly",singer: "Sơn Tùng",onMorePressed: () {
+                SizedBox(child:         ListView.builder(
+                  primary: true,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 8,
+                  itemBuilder: (context, index) {
+                    return StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance.collection('db_songs').snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return const Center(child: Text("No songs available"));
+                        }
 
-                          },));
-                    },),
-                ),
+                        final songs = snapshot.data!.docs;
+                        if (index >= songs.length) return Container(); // Ngăn lỗi nếu index vượt quá dữ liệu.
+
+                        final song = songs[index];
+                        return InkWell(
+                          onTap: () {
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => const MusicPlayerScreen(),
+                            //   ),
+                            // );
+                          },
+                          child: CustomMusic(
+                            icon: Icons.circle,
+                            img: song['image_url'] ?? 'default_image.png', // Link ảnh từ Firestore
+                            rank: "${index + 1}",
+                            nameMusic: song['title'] ?? "Unknown Song", // Tên bài hát
+                            singer: song['artist'] ?? "Unknown Artist", // Tên nghệ sĩ
+                            onMorePressed: () {
+                              debugPrint("More options for ${song['name']}");
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  },
+                )
+                  ,),
               ],
             ),
           ),

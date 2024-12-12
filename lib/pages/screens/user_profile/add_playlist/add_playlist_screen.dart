@@ -83,7 +83,7 @@ class _AddPlaylistScreenState extends State<AddPlaylistScreen> {
                   ],
                 ),
               ),
-              const CusButton(text: "Tạo playlist", color: Styles.blueIcon,)
+              CusButton(text: "Tạo playlist", color: Styles.blueIcon,)
             ],
           ),
         ),

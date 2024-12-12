@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-class BottomMusicPlayer extends StatelessWidget {
+class BottomMusicPlayer1 extends StatelessWidget {
   final List<String> options;
   final int selectedIndex;
   final ValueChanged<int> onOptionSelected;
   final String title;
 
-  const BottomMusicPlayer({super.key,
+  const BottomMusicPlayer1({super.key,
     required this.options,
     required this.selectedIndex,
     required this.onOptionSelected,
@@ -81,7 +81,7 @@ void showCustomSoundQualitySheet({
       borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
     ),
     builder: (BuildContext context) {
-      return BottomMusicPlayer(
+      return BottomMusicPlayer1(
         title:title,
         options: options,
         selectedIndex: selectedIndex,

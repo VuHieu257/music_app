@@ -116,7 +116,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 style: context.theme.textTheme.titleMedium,
               ),
             ),
-            const CusButton(text: "Nâng cấp", color: Colors.orange,)
+            CusButton(text: "Nâng cấp", color: Colors.orange,)
 
           ],
         ),

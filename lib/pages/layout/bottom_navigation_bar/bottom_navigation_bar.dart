@@ -1,15 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:music_app/core/size/size.dart';
 import 'package:music_app/pages/screens/home/home.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/colors/color.dart';
-import '../../../music_player.dart';
 import '../../../themeprovider.dart';
 import '../../screens/message/message.dart';
+import '../../screens/musicplayerscreen/provider.dart';
 import '../../screens/schedule/schedule_screen.dart';
 import '../../screens/user_profile/user_profile_screen.dart';
-import '../../widget_small/bottom/bottom_music_player.dart';
+import '../../widget_small/bottom/show_custom_bottom/show_custom_bottom_sheet.dart';
+import '../../widget_small/bottom_music_player.dart';
 class BottomNavigaBar extends StatefulWidget {
   const BottomNavigaBar({super.key});
 
@@ -32,7 +34,7 @@ class _BottomNavigationBarState extends State<BottomNavigaBar> {
       _selectedIndex = index;
     });
   }
-
+  final user=FirebaseAuth.instance.currentUser?.uid;
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -44,18 +46,13 @@ class _BottomNavigationBarState extends State<BottomNavigaBar> {
         children: [
           _pages[_selectedIndex],
 
-          if (musicPlayerProvider.isMusicPlayerVisible)
+          if (musicPlayerProvider.isVisibility)
             Positioned(
               bottom: 0,
-              top: context.height*0.73,
+              top: MediaQuery.of(context).padding.bottom+context.height*0.78,
               left: 0,
               right: 0,
-              child: BottomMusicPlayer(
-                songName: musicPlayerProvider.currentSongName,
-                artistName: musicPlayerProvider.currentArtistName,
-                albumArt: musicPlayerProvider.currentAlbumArt,
-                onClose: musicPlayerProvider.hideMusicPlayer,
-              ),
+              child: _buildMusicPlayerBar(musicPlayerProvider),
             ),
           // BottomNavigationBar đặt lên trên cùng
           Positioned(
@@ -112,4 +109,23 @@ class _BottomNavigationBarState extends State<BottomNavigaBar> {
       ),
     );
   }
+  Widget _buildMusicPlayerBar(MusicPlayerProvider musicPlayer) {
+    return
+      BottomMusicPlayer(
+        songName: musicPlayer.currentSong?['title'] ?? '',
+        artistName: musicPlayer.currentSong?['artist'] ?? '',
+        albumArt: musicPlayer.currentSong?['image_url'] ?? '',
+        isPlaying: musicPlayer.isPlaying,
+        idUser:"$user",
+        idSong:musicPlayer.currentSong?.id??"",
+        musicPlayer:musicPlayer,
+        onClose: () {
+          if (musicPlayer.isPlaying) {
+            musicPlayer.pauseMusic();
+          } else {
+            musicPlayer.resumeMusic();}
+        },
+      );
+  }
+
 }

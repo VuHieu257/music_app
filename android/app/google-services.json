@@ -1,13 +1,32 @@
 {
   "project_info": {
-    "project_number": "50895062845",
-    "project_id": "music-app-9016e",
-    "storage_bucket": "music-app-9016e.appspot.com"
+    "project_number": "641383178154",
+    "project_id": "academy-app-400f3",
+    "storage_bucket": "academy-app-400f3.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:50895062845:android:e70bc79e1d967de47fe754",
+        "mobilesdk_app_id": "1:641383178154:android:cae2793a4aeaeb042215d3",
+        "android_client_info": {
+          "package_name": "com.example.fintech_dashboard_clone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNbo2_xo8CEgU-c39RlIjyWQnj7HGDqNg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:641383178154:android:8fdbc6aa2d6059e92215d3",
         "android_client_info": {
           "package_name": "com.example.music_app"
         }
@@ -15,7 +34,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCEb8jbsXZPmRXtaEbai3qvEzxH5iPVDrU"
+          "current_key": "AIzaSyCNbo2_xo8CEgU-c39RlIjyWQnj7HGDqNg"
         }
       ],
       "services": {

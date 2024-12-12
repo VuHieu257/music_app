@@ -7,12 +7,13 @@ class CustomTextField extends StatelessWidget {
   final Icon prefixIcon;
   final Color bg;
   final Color colorText;
+  final TextEditingController? controller;
 
   const CustomTextField({
     super.key,
     required this.hintText,
     required this.prefixIcon,
-    required this.bg, required this.colorText,
+    required this.bg, required this.colorText, this.controller,
   });
 
   @override
@@ -20,6 +21,7 @@ class CustomTextField extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal:Styles.defaultPadding),
       child: TextFormField(
+        controller: controller,
         keyboardType: TextInputType.text,
         decoration: InputDecoration(
             filled: true, // Cho phép tô màu nền

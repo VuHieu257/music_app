@@ -84,7 +84,7 @@ class CustomMusic extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: const BorderRadius.all(Radius.circular(8)),
             image: DecorationImage(
-              image: AssetImage(img),
+              image: NetworkImage(img),
               fit: BoxFit.fitHeight,
             ),
           ),

@@ -190,7 +190,7 @@ class _UpdateAccountScreenState extends State<UpdateAccountScreen> {
             //     ),
             //   ),
             // ),
-            const CusButton(text: "Cập nhật", color: Styles.blue)
+            CusButton(text: "Cập nhật", color: Styles.blue)
           ],
         ),
       ),
