@@ -29,6 +29,7 @@ class Asset {
   static const String bgImageMusic = '$_img/img_1.png';
   static const String bgImageMusicDetail = '$_img/img_music_detail.png';
   static const String bgImageAvatar = '$_img/anh-gai-dep-de-thuong-k7-k8-2k7-2k8_100015595.jpg';
+  static const String bgImageAvatarUser = '$_img/user-login-icon-14.png';
   static const String bgImageFirst = '$_imgIntroductionAnimation/bg_introduction_image.png';
 
 

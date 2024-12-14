@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:music_app/auth_service.dart';
 import 'package:music_app/core/size/size.dart';
 import 'package:music_app/core/themes/theme_extensions.dart';
 import 'package:music_app/pages/screens/musicplayerscreen/provider.dart';
@@ -46,7 +48,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
     });
   }
 
-  Duration _stopDuration = const Duration(minutes: 0);
   int _currentPage = 0;
 
   @override
@@ -72,7 +73,29 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
           },
         ),
         actions: [
-          Icon(Icons.more_horiz, color: context.theme.iconTheme.color),
+          Consumer<MusicPlayerProvider>(
+            builder: (context, musicPlayer, child) {
+              if (musicPlayer.currentSong == null) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              return PopupMenuButton<String>(
+                color: Colors.white,
+                onSelected: (value) {
+                  if (value == 'report') {
+                    _showReportDialog(context,songId: musicPlayer.currentSong?.id);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'report',
+                    child: Text('Report song'),
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -286,8 +309,8 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                         children: [
                           InkWell(
                               onTap: () {
-                                // showMessger(context);
-                                showCommentModal(context,musicPlayer.currentSong!.id);
+                                showCommentModal(
+                                    context, musicPlayer.currentSong!.id);
                               },
                               child: Icon(Icons.messenger_outline,
                                   size: 25,
@@ -351,86 +374,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
     return "$minutes:$seconds";
   }
 
-  // void showCommentModal(BuildContext context) {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     isScrollControlled: true,
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-  //     ),
-  //     builder: (BuildContext context) {
-  //       return FractionallySizedBox(
-  //         heightFactor: 0.8, // Occupies 80% of the screen height
-  //         child: Container(
-  //           padding:
-  //               const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-  //           child: Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Align(
-  //                 alignment: Alignment.center,
-  //                 child: Container(
-  //                   height: 4,
-  //                   width: MediaQuery.of(context).size.width * 0.2,
-  //                   decoration: BoxDecoration(
-  //                     borderRadius: BorderRadius.circular(10),
-  //                     color: Colors.grey,
-  //                   ),
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 10),
-  //               Align(
-  //                 alignment: Alignment.center,
-  //                 child: Text(
-  //                   "34 bình luận",
-  //                   style: context.theme.textTheme.headlineMedium,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 10),
-  //               Expanded(
-  //                 child: ListView.builder(
-  //                   itemCount: 10,
-  //                   itemBuilder: (context, index) {
-  //                     return _messUser(context, Asset.bgImageAvatar, "Nấm",
-  //                         "❤️❤️", "2m ago");
-  //                   },
-  //                 ),
-  //               ),
-  //               const Divider(),
-  //               Row(
-  //                 children: [
-  //                   const CircleAvatar(
-  //                     radius: 20,
-  //                     backgroundImage: AssetImage(Asset.bgImageAvatar),
-  //                   ),
-  //                   const SizedBox(width: 10),
-  //                   Expanded(
-  //                     child: TextField(
-  //                       decoration: InputDecoration(
-  //                         hintText: 'Add a comment...',
-  //                         border: OutlineInputBorder(
-  //                           borderRadius: BorderRadius.circular(20),
-  //                         ),
-  //                         suffixIcon: const Icon(Icons.tag_faces),
-  //                         contentPadding:
-  //                             const EdgeInsets.symmetric(horizontal: 15),
-  //                       ),
-  //                     ),
-  //                   ),
-  //                   const SizedBox(width: 10),
-  //                   const Icon(
-  //                     Icons.send,
-  //                     color: Styles.blueIcon,
-  //                   )
-  //                 ],
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
   void showCommentModal(BuildContext context, String songId) {
     final TextEditingController commentController = TextEditingController();
 
@@ -441,132 +384,202 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (BuildContext context) {
-        return FractionallySizedBox(
-          heightFactor: 0.8, // Occupies 80% of the screen height
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Drag handle
-                Align(
-                  alignment: Alignment.center,
-                  child: Container(
-                    height: 4,
-                    width: MediaQuery.of(context).size.width * 0.2,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Title with comment count
-                StreamBuilder<int>(
-                  stream: fetchCommentCount(songId), // Fetch the comment count
-                  builder: (context, snapshot) {
-                    final count = snapshot.data ?? 0;
-                    return Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        "$count bình luận",
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 10),
-
-                // Comment list
-                Expanded(
-                  child: StreamBuilder<List<Map<String, dynamic>>>(
-                    stream: fetchComments(songId), // Fetch comment data
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(child: Text('Chưa có bình luận nào.'));
-                      }
-
-                      final comments = snapshot.data!;
-                      return ListView.builder(
-                        itemCount: comments.length,
-                        itemBuilder: (context, index) {
-                          final comment = comments[index];
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundImage:
-                              NetworkImage(comment['avatar'] ?? ''),
-                            ),
-                            title: Text(comment['username'] ?? 'Unknown'),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(comment['content'] ?? ''),
-                                const SizedBox(height: 5),
-                                Text(
-                                  comment['timestamp'] ?? '',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const Divider(),
-
-                // Add new comment
-                Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 20,
-                      backgroundImage: AssetImage(Asset.bgImageAvatar),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: commentController,
-                        decoration: InputDecoration(
-                          hintText: 'Thêm bình luận...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          suffixIcon: const Icon(Icons.tag_faces),
-                          contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 15),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    IconButton(
-                      icon: const Icon(Icons.send, color: Styles.blueIcon),
-                      onPressed: () async {
-                        if (commentController.text.trim().isNotEmpty) {
-                          await addComment(songId, {
-                            'userId': 'currentUserId', // Lấy từ Auth
-                            'username': 'currentUsername', // Lấy từ Auth
-                            'avatar': 'currentAvatarUrl', // Lấy từ Auth
-                            'content': commentController.text.trim(),
-                            'timestamp': DateTime.now().toIso8601String(),
-                          });
-                          commentController.clear();
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ],
+        return GestureDetector(
+          onTap: () => AuthService().hideKeyBoard(),
+          child: FractionallySizedBox(
+            heightFactor: 0.8, // Occupies 80% of the screen height
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDragHandle(context),
+                  const SizedBox(height: 10),
+                  _buildCommentCount(songId),
+                  const SizedBox(height: 10),
+                  _buildCommentList(songId),
+                  const Divider(),
+                  _buildAddCommentRow(context, songId, commentController),
+                ],
+              ),
             ),
           ),
         );
       },
     );
   }
+
+  Widget _buildDragHandle(BuildContext context) {
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        height: 4,
+        width: MediaQuery.of(context).size.width * 0.2,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.grey,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCommentCount(String songId) {
+    return StreamBuilder<int>(
+      stream: fetchCommentCount(songId),
+      builder: (context, snapshot) {
+        final count = snapshot.data ?? 0;
+        return Align(
+          alignment: Alignment.center,
+          child: Text(
+            "$count comment${count > 1 ? 's' : ''}",
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCommentList(String songId) {
+    return Expanded(
+      child: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: fetchComments(songId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('There are no comments yet.'));
+          }
+
+          final comments = snapshot.data!;
+          return ListView.builder(
+            itemCount: comments.length,
+            itemBuilder: (context, index) {
+              final comment = comments[index];
+              return _buildCommentTile(comment, songId);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCommentTile(Map<String, dynamic> comment, String songId) {
+    return ListTile(
+      leading: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.grey,
+          shape: BoxShape.circle,
+          image: DecorationImage(
+            image: FadeInImage.assetNetwork(
+              placeholder: Asset.bgImageAvatarUser, // hình ảnh mặc định
+              image: comment['avatar'] ?? '',
+              imageErrorBuilder: (context, error, stackTrace) {
+                return Image.asset(
+                    Asset.bgImageAvatarUser); // hình ảnh mặc định
+              },
+            ).image,
+          ),
+        ),
+      ),
+      title: Text(comment['username'] ?? 'Unknown'),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(comment['content'] ?? ''),
+          const SizedBox(height: 5),
+          Text(
+            comment['timestamp'] ?? '',
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
+      trailing: PopupMenuButton<String>(
+        color: Colors.white,
+        onSelected: (value) {
+          if (value == 'delete') {
+            deleteComment(songId, comment);
+          } else if (value == 'report') {
+            _showReportDialog(context, comment: comment);
+          }
+        },
+        itemBuilder: (context) => [
+          if (comment['userId'] == user)
+            const PopupMenuItem(
+              value: 'delete',
+              child: Text('Delete'),
+            ),
+          const PopupMenuItem(
+            value: 'report',
+            child: Text('Report'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddCommentRow(BuildContext context, String songId,
+      TextEditingController commentController) {
+    return Row(
+      children: [
+        const CircleAvatar(
+          radius: 20,
+          backgroundImage: AssetImage(Asset.bgImageAvatar),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: TextField(
+            controller: commentController,
+            decoration: InputDecoration(
+              hintText: 'Thêm bình luận...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              suffixIcon: const Icon(Icons.tag_faces),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 15),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        IconButton(
+          icon: const Icon(Icons.send, color: Styles.blueIcon),
+          onPressed: () async {
+            if (commentController.text.trim().isNotEmpty) {
+              await _handleAddComment(songId, commentController);
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _handleAddComment(
+      String songId, TextEditingController commentController) async {
+    try {
+      final documentSnapshot = await FirebaseFirestore.instance
+          .collection("db_user")
+          .doc(user)
+          .get();
+
+      final data = documentSnapshot.data();
+      await addComment(songId, {
+        'userId': user,
+        'username': data?['displayName'] ?? 'Anonymous',
+        'avatar': data?['img'] ?? '',
+        'content': commentController.text.trim(),
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+      commentController.clear();
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error adding comment: $e");
+      }
+    }
+  }
+
   Stream<int> fetchCommentCount(String songId) {
     return FirebaseFirestore.instance
         .collection('db_songs')
@@ -579,6 +592,7 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
           : 0;
     });
   }
+
   Stream<List<Map<String, dynamic>>> fetchComments(String songId) {
     return FirebaseFirestore.instance
         .collection('db_songs')
@@ -592,188 +606,233 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
       return [];
     });
   }
-  Future<void> addComment(String songId, Map<String, dynamic> newComment) async {
-    final songRef = FirebaseFirestore.instance.collection('db_songs').doc(songId);
+
+  Future<void> addComment(
+      String songId, Map<String, dynamic> newComment) async {
+    final songRef =
+        FirebaseFirestore.instance.collection('db_songs').doc(songId);
     await songRef.update({
       'comments': FieldValue.arrayUnion([newComment])
     });
   }
 
-  Widget _messUser(BuildContext context, String img, String name,
-      String comment, String date) {
-    return ListTile(
-      trailing: const Icon(
-        Icons.favorite_border,
-      ),
-      title: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            name,
-            style: context.theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(
-            height: context.height * 0.01,
-          ),
-          Text(
-            comment,
-            style: context.theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-      subtitle: Row(
-        children: [
-          SizedBox(
-            height: context.height * 0.01,
-          ),
-          Text(
-            date,
-            style: context.theme.textTheme.titleMedium
-                ?.copyWith(color: Styles.grey),
-          ),
-          SizedBox(
-            width: context.width * 0.02,
-          ),
-          Text(
-            "Trả lời",
-            style: context.theme.textTheme.titleMedium
-                ?.copyWith(color: Styles.grey),
-          ),
-        ],
-      ),
-      onTap: () {
-        // Xử lý khi chọn chất lượng 128 kbps
-        Navigator.pop(context);
-      },
-      leading: CircleAvatar(
-        radius: 20,
-        backgroundImage: AssetImage(img),
-      ),
-    );
-  }
+  Future<void> deleteComment(
+      String songId, Map<String, dynamic> comment) async {
+    final docRef =
+        FirebaseFirestore.instance.collection('db_songs').doc(songId);
 
-  void showQualityBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Align(
-                alignment: Alignment.center,
-                child: Container(
-                  height: 4,
-                  alignment: Alignment.center,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  width: context.width * 0.2,
-                  decoration: const BoxDecoration(
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      color: Styles.grey),
-                ),
-              ),
-              Text(
-                "Chọn chất lượng tải",
-                style: context.theme.textTheme.headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const Divider(
-                color: Styles.dark,
-              ),
-              ListTile(
-                trailing: const Icon(
-                  Icons.done,
-                  color: Styles.blueIcon,
-                ),
-                title: Text(
-                  "Chất lượng tiêu chuẩn",
-                  style: context.theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                subtitle: Text(
-                  "Tiết kiệm bộ nhớ cho thiết bị",
-                  style: context.theme.textTheme.titleMedium
-                      ?.copyWith(color: Styles.grey),
-                ),
-                onTap: () {
-                  // Xử lý khi chọn chất lượng 128 kbps
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                trailing: const Icon(
-                  Icons.done,
-                  color: Styles.blueIcon,
-                ),
-                title: Text(
-                  "Chất lượng cao",
-                  style: context.theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                subtitle: Text(
-                  "Chất lượng âm thanh cao",
-                  style: context.theme.textTheme.titleMedium
-                      ?.copyWith(color: Styles.grey),
-                ),
-                onTap: () {
-                  // Xử lý khi chọn chất lượng 320 kbps
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                trailing: const Icon(
-                  Icons.done,
-                  color: Styles.blueIcon,
-                ),
-                title: Row(
-                  children: [
-                    Text(
-                      "Lossless",
-                      style: context.theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(left: 5),
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                          color: Styles.blueIcon.withOpacity(0.3),
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(5))),
-                      child: Text(
-                        "PREMIUM",
-                        style: context.theme.textTheme.titleMedium
-                            ?.copyWith(color: Styles.blueIcon, fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-                subtitle: Text(
-                  "Tiết kiệm bộ nhớ cho thiết bị",
-                  style: context.theme.textTheme.titleMedium
-                      ?.copyWith(color: Styles.grey),
-                ),
-                onTap: () {
-                  // Xử lý khi chọn chất lượng Lossless
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    await docRef.update({
+      'comments': FieldValue.arrayRemove([comment])
+    });
   }
+}
+
+void _showReportDialog(BuildContext context, {Map<String, dynamic>? comment,String? songId}) {
+  final TextEditingController reasonController = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title:songId!=null? const Text('Report Song'):const Text('Report Comment'),
+        content: TextField(
+          controller: reasonController,
+          decoration: InputDecoration(
+            labelText: 'Reason',
+            hintText: 'Enter the reason you want to report the post',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.0), // Bo góc
+              borderSide: const BorderSide(
+                color: Colors.grey, // Màu viền
+                width: 1.0, // Độ dày viền
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10.0),
+              borderSide: const BorderSide(
+                color: Colors.blue, // Màu viền khi TextField được chọn
+                width: 2.0,
+              ),
+            ),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Đóng dialog
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final reason = reasonController.text.trim();
+              if (reason.isNotEmpty) {
+                _submitReport(comment, reason,songId!); // Gửi report
+                Navigator.of(context).pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter reason')),
+                );
+              }
+            },
+            child: const Text('Send'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _submitReport(Map<String, dynamic>? comment,String? songId, String reason) {
+  // Ví dụ lưu vào Firestore
+  if(comment!=null){
+    FirebaseFirestore.instance.collection('db_reportComment').add({
+      'comment': [comment],
+      'reason': reason,
+      'reportedAt': FieldValue.serverTimestamp(),
+    }).then((value) {
+      if (kDebugMode) {
+        print('Report submitted');
+      }
+    }).catchError((error) {
+      if (kDebugMode) {
+        print('Failed to submit report: $error');
+      }
+    });
+  }else{
+    FirebaseFirestore.instance.collection('db_reports').add({
+      'songId': songId,
+      'reason': reason,
+      'reportedAt': FieldValue.serverTimestamp(),
+    }).then((value) {
+      if (kDebugMode) {
+        print('Report submitted');
+      }
+    }).catchError((error) {
+      if (kDebugMode) {
+        print('Failed to submit report: $error');
+      }
+    });
+  }
+}
+
+void showQualityBottomSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (BuildContext context) {
+      return Container(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Align(
+              alignment: Alignment.center,
+              child: Container(
+                height: 4,
+                alignment: Alignment.center,
+                margin: const EdgeInsets.only(bottom: 10),
+                width: context.width * 0.2,
+                decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    color: Styles.grey),
+              ),
+            ),
+            Text(
+              "Chọn chất lượng tải",
+              style: context.theme.textTheme.headlineMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const Divider(
+              color: Styles.dark,
+            ),
+            ListTile(
+              trailing: const Icon(
+                Icons.done,
+                color: Styles.blueIcon,
+              ),
+              title: Text(
+                "Chất lượng tiêu chuẩn",
+                style: context.theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              subtitle: Text(
+                "Tiết kiệm bộ nhớ cho thiết bị",
+                style: context.theme.textTheme.titleMedium
+                    ?.copyWith(color: Styles.grey),
+              ),
+              onTap: () {
+                // Xử lý khi chọn chất lượng 128 kbps
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              trailing: const Icon(
+                Icons.done,
+                color: Styles.blueIcon,
+              ),
+              title: Text(
+                "Chất lượng cao",
+                style: context.theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              subtitle: Text(
+                "Chất lượng âm thanh cao",
+                style: context.theme.textTheme.titleMedium
+                    ?.copyWith(color: Styles.grey),
+              ),
+              onTap: () {
+                // Xử lý khi chọn chất lượng 320 kbps
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              trailing: const Icon(
+                Icons.done,
+                color: Styles.blueIcon,
+              ),
+              title: Row(
+                children: [
+                  Text(
+                    "Lossless",
+                    style: context.theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(left: 5),
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                        color: Styles.blueIcon.withOpacity(0.3),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(5))),
+                    child: Text(
+                      "PREMIUM",
+                      style: context.theme.textTheme.titleMedium
+                          ?.copyWith(color: Styles.blueIcon, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+              subtitle: Text(
+                "Tiết kiệm bộ nhớ cho thiết bị",
+                style: context.theme.textTheme.titleMedium
+                    ?.copyWith(color: Styles.grey),
+              ),
+              onTap: () {
+                // Xử lý khi chọn chất lượng Lossless
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }

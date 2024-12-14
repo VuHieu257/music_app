@@ -5,6 +5,8 @@ import 'package:music_app/core/themes/theme_extensions.dart';
 
 import '../../../../core/assets.dart';
 import '../../../../core/colors/color.dart';
+import '../../../../service/function_firebase.dart';
+
 class GroupCreationScreen extends StatefulWidget {
   const GroupCreationScreen({super.key});
 
@@ -23,13 +25,17 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
       builder: (BuildContext context) {
         return Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            bottom: MediaQuery
+                .of(context)
+                .viewInsets
+                .bottom,
           ),
           child: const NewGroupModal(),
         );
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,13 +60,17 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            InkWell(onTap: () {
+              createNewChat(context, "hafqF9xuWgXLQ9keqCmembit2L43", "user_demo", "Tùng B");
+              },child: Text("Create"),),
             ListTile(
               leading: const Icon(Icons.group_add, color: Colors.black),
               title: Text(
                 'Tạo nhóm mới',
                 style: context.theme.textTheme.headlineMedium,
               ),
-              trailing: Icon(Icons.arrow_forward_ios, color: context.theme.iconTheme.color),
+              trailing: Icon(Icons.arrow_forward_ios,
+                  color: context.theme.iconTheme.color),
               onTap: () {
                 _showNewGroupModal(context);
               },
@@ -69,32 +79,32 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                 borderRadius: BorderRadius.circular(8.0),
               ),
             ),
-            SizedBox(height: context.height*0.01),
+            SizedBox(height: context.height * 0.01),
             Text(
               'Gợi ý',
-             style: context.theme.textTheme.headlineSmall,
+              style: context.theme.textTheme.headlineSmall,
             ),
-            SizedBox(height: context.height*0.01),
+            SizedBox(height: context.height * 0.01),
             SizedBox(
-              height: context.height*0.5,
+              height: context.height * 0.5,
               child: ListView.builder(
                 itemCount: 4,
                 itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5),
-                  child: ListTile(
-                    leading: const CircleAvatar(
-                        backgroundImage: AssetImage(Asset.bgImageAvatar) ),
-                    title: Text(
-                      'Ung Sang',
-                      style: context.theme.textTheme.headlineSmall,
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: ListTile(
+                      leading: const CircleAvatar(
+                          backgroundImage: AssetImage(Asset.bgImageAvatar)),
+                      title: Text(
+                        'Ung Sang',
+                        style: context.theme.textTheme.headlineSmall,
+                      ),
+                      onTap: () {
+                        // Add user selection functionality here
+                      },
                     ),
-                    onTap: () {
-                      // Add user selection functionality here
-                    },
-                  ),
-                );
-              },),
+                  );
+                },),
             ),
           ],
         ),
@@ -102,6 +112,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
     );
   }
 }
+
 class NewGroupModal extends StatelessWidget {
   const NewGroupModal({super.key});
 
@@ -121,7 +132,7 @@ class NewGroupModal extends StatelessWidget {
                 },
                 child: Text('Hủy',
                   style: context.theme.textTheme.headlineSmall?.copyWith(
-                    color: Styles.blueIcon
+                      color: Styles.blueIcon
                   ),
                 ),
               ),
@@ -156,10 +167,10 @@ class NewGroupModal extends StatelessWidget {
             leading: Stack(
               children: [
                 CircleAvatar(
-                  radius: 20,
-                  backgroundImage:AssetImage(
-                    Asset.bgImageAvatar
-                  )
+                    radius: 20,
+                    backgroundImage: AssetImage(
+                        Asset.bgImageAvatar
+                    )
                 ),
                 Positioned(
                   right: 0,
@@ -167,7 +178,7 @@ class NewGroupModal extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 8,
                     backgroundColor: Styles.blueIcon,
-                    child: Icon(Icons.close,color: Styles.light, size: 13),
+                    child: Icon(Icons.close, color: Styles.light, size: 13),
                   ),
                 ),
               ],
@@ -175,11 +186,11 @@ class NewGroupModal extends StatelessWidget {
             title: Text('Phan Hien'),
           ),
           const SizedBox(height: 10),
-          Text('Gợi ý',style: context.theme.textTheme.headlineMedium,),
+          Text('Gợi ý', style: context.theme.textTheme.headlineMedium,),
           ListTile(
-            leading:  const CircleAvatar(
+            leading: const CircleAvatar(
                 radius: 20,
-                backgroundImage:AssetImage(
+                backgroundImage: AssetImage(
                     Asset.bgImageAvatar
                 )
             ),
@@ -192,7 +203,7 @@ class NewGroupModal extends StatelessWidget {
           ListTile(
             leading: const CircleAvatar(
                 radius: 20,
-                backgroundImage:AssetImage(
+                backgroundImage: AssetImage(
                     Asset.bgImageAvatar
                 )
             ),
