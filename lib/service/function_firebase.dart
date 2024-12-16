@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../pages/screens/message/message_detail/message_detail..dart';
+
 
 final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -116,7 +118,7 @@ Future<void> removeFriend(
 }
 
 void createNewChat(BuildContext context, String currentUserId,
-    String otherUserId, String name) async {
+    String otherUserId, String name,String img) async {
   final chatQuery = await _firestore
       .collection('chats')
       .where('participants', arrayContains: currentUserId)
@@ -135,18 +137,18 @@ void createNewChat(BuildContext context, String currentUserId,
   }
 
   if (chatExists) {
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => ChatScreen(
-    //       currentUserId: currentUserId,
-    //       name: name,
-    //       chatId: chatId,
-    //       receiverId: otherUserId,
-    //       receiverName: name,
-    //     ),
-    //   ),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MessageDetail(
+          currentUserId: currentUserId,
+          name: name,
+          chatID: chatId,
+          receiverId: otherUserId,
+          receiverName: name, imgOther: img,
+        ),
+      ),
+    );
   } else {
     final chatDocRef = _firestore.collection('chats').doc();
 
@@ -156,18 +158,18 @@ void createNewChat(BuildContext context, String currentUserId,
       'lastTimestamp': FieldValue.serverTimestamp(),
     });
 
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => ChatScreen(
-    //       currentUserId: currentUserId,
-    //       name: name,
-    //       chatId: chatDocRef.id,
-    //       receiverId: otherUserId,
-    //       receiverName: name,
-    //     ),
-    //   ),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MessageDetail(
+          currentUserId: currentUserId,
+          name: name,
+          chatID: chatId,
+          receiverId: otherUserId,
+          receiverName: name, imgOther: img,
+        ),
+      ),
+    );
   }
 }
 Future<void> addUser(String userId, String name, String email) async {

@@ -4,10 +4,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:music_app/auth_service.dart';
 import 'package:music_app/core/size/size.dart';
 import 'package:music_app/core/themes/theme_extensions.dart';
+import 'package:music_app/main.dart';
+import 'package:music_app/pages/screens/musicplayerscreen/provider.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/assets.dart';
 import '../../../../core/colors/color.dart';
@@ -15,8 +20,20 @@ import '../../../widget_small/message/box_chat.dart';
 
 class MessageDetail extends StatefulWidget {
   final String chatID;
+  final String name;
+  final String currentUserId;
+  final String receiverId;
+  final String receiverName;
+  final String imgOther;
 
-  const MessageDetail({super.key, required this.chatID});
+  const MessageDetail(
+      {super.key,
+      required this.chatID,
+      required this.name,
+      required this.currentUserId,
+      required this.receiverId,
+      required this.receiverName,
+      required this.imgOther});
 
   @override
   State<MessageDetail> createState() => _MessageDetailState();
@@ -75,9 +92,11 @@ class _MessageDetailState extends State<MessageDetail> {
                 ),
                 title: Row(
                   children: [
-                    const CircleAvatar(
-                      radius: 20,
-                      backgroundImage: AssetImage(Asset.bgImageAvatar),
+                    CircleAvatar(
+                      backgroundImage: widget.imgOther != ""
+                          ? NetworkImage(widget.imgOther)
+                          : const AssetImage(Asset.bgImageAvatarUser)
+                              as ImageProvider,
                     ),
                     SizedBox(
                       width: context.width * 0.02,
@@ -87,11 +106,11 @@ class _MessageDetailState extends State<MessageDetail> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Jane💕",
+                          widget.name,
                           style: context.theme.textTheme.headlineMedium
                               ?.copyWith(fontWeight: FontWeight.w500),
                         ),
-                        Text("Hello are you home?",
+                        Text("Online",
                             style: context.theme.textTheme.titleMedium
                                 ?.copyWith(color: Styles.grey))
                       ],
@@ -129,8 +148,8 @@ class _MessageDetailState extends State<MessageDetail> {
                       itemCount: messages.length,
                       itemBuilder: (context, index) {
                         var messageData = messages[index];
-                        bool isMe = messageData['senderId'] ==
-                            "hafqF9xuWgXLQ9keqCmembit2L43";
+                        bool isMe =
+                            messageData['senderId'] == widget.currentUserId;
                         String messageId = messageData.id;
                         bool isSelected = selectedMessages.contains(messageId);
                         return !isSelecting
@@ -139,7 +158,9 @@ class _MessageDetailState extends State<MessageDetail> {
                                     ? Colors.blue.withOpacity(0.5)
                                     : Colors.transparent,
                                 child: _buildChatRow(
-                                  audioUrl: messageData['audioUrl'],
+                                  titleSong: messageData['content'],
+                                  songImg: messageData['songUrlImg'],
+                                  audioUrl: messageData['songUrl'],
                                   chatID: widget.chatID,
                                   message: messageData['message'],
                                   img: List<String>.from(
@@ -162,7 +183,9 @@ class _MessageDetailState extends State<MessageDetail> {
                                   },
                                 ),
                                 title: _buildChatRow(
-                                  audioUrl: messageData['audioUrl'],
+                                  titleSong: messageData['content'],
+                                  audioUrl: messageData['songUrl'],
+                                  songImg: messageData['songUrlImg'],
                                   chatID: widget.chatID,
                                   message: messageData['message'],
                                   img: List<String>.from(
@@ -187,112 +210,9 @@ class _MessageDetailState extends State<MessageDetail> {
                   },
                 ),
               ),
-              const SizedBox(height: 50,)
-              // Center(
-              //   child: Text(
-              //     "13:45 PM",
-              //     style: context.theme.textTheme.headlineSmall
-              //         ?.copyWith(color: Styles.grey),
-              //   ),
-              // ),
-              // Row(
-              //   children: [
-              //     const CircleAvatar(
-              //       radius: 20,
-              //       backgroundImage: AssetImage(Asset.bgImageAvatar),
-              //     ),
-              //     SizedBox(
-              //       width: context.width * 0.02,
-              //     ),
-              //     Container(
-              //         width: context.height * 0.3,
-              //         margin: const EdgeInsets.only(top: 20),
-              //         padding: const EdgeInsets.all(10),
-              //         decoration: const BoxDecoration(
-              //             color: Styles.greyLight,
-              //             borderRadius: BorderRadius.all(Radius.circular(10))),
-              //         child: Text("aaaaaaaaaaaaaaaaaaaa",
-              //             style: context.theme.textTheme.headlineMedium)),
-              //   ],
-              // ),
-              // Align(
-              //   alignment: Alignment.topRight,
-              //   child: Container(
-              //       width: context.height * 0.35,
-              //       padding: const EdgeInsets.all(10),
-              //       margin: const EdgeInsets.only(top: 20),
-              //       decoration: const BoxDecoration(
-              //           color: Styles.blueIcon,
-              //           borderRadius: BorderRadius.all(Radius.circular(10))),
-              //       child: Text("Jane💕aaaaaaaaaaaaaaaaaaaa",
-              //           style: context.theme.textTheme.headlineMedium
-              //               ?.copyWith(color: Styles.light))),
-              // ),
-              // Align(
-              //   alignment: Alignment.topRight,
-              //   child: Container(
-              //       width: context.height * 0.3,
-              //       padding: const EdgeInsets.all(10),
-              //       margin: const EdgeInsets.only(top: 20),
-              //       decoration: const BoxDecoration(
-              //           color: Styles.greyLight,
-              //           borderRadius: BorderRadius.all(Radius.circular(10))),
-              //       child: Column(
-              //         children: [
-              //           Row(
-              //             children: [
-              //               Container(
-              //                 height: context.height * 0.07,
-              //                 width: context.height * 0.07,
-              //                 decoration: const BoxDecoration(
-              //                     borderRadius:
-              //                         BorderRadius.all(Radius.circular(10)),
-              //                     image: DecorationImage(
-              //                         image: AssetImage(
-              //                             Asset.bgImageMusicDetail))),
-              //               ),
-              //               SizedBox(
-              //                 width: context.width * 0.02,
-              //               ),
-              //               Column(
-              //                 children: [
-              //                   SizedBox(
-              //                     width: context.width * 0.3,
-              //                     child: Text("Bụi",
-              //                         style: context
-              //                             .theme.textTheme.headlineMedium
-              //                             ?.copyWith(
-              //                                 overflow: TextOverflow.ellipsis)),
-              //                   ),
-              //                   SizedBox(
-              //                     width: context.width * 0.3,
-              //                     child: Text("Mây trắng",
-              //                         style: context
-              //                             .theme.textTheme.headlineSmall
-              //                             ?.copyWith(
-              //                                 overflow: TextOverflow.ellipsis,
-              //                                 color: Styles.grey)),
-              //                   ),
-              //                 ],
-              //               )
-              //             ],
-              //           ),
-              //           Container(
-              //             alignment: Alignment.center,
-              //             padding: const EdgeInsets.all(5),
-              //             margin: const EdgeInsets.only(top: 10),
-              //             decoration: const BoxDecoration(
-              //                 borderRadius:
-              //                     BorderRadius.all(Radius.circular(10)),
-              //                 color: Styles.light),
-              //             child: Text(
-              //               "Hủy",
-              //               style: context.theme.textTheme.headlineSmall,
-              //             ),
-              //           )
-              //         ],
-              //       )),
-              // ),
+              const SizedBox(
+                height: 70,
+              )
             ],
           ),
         ),
@@ -315,16 +235,11 @@ class _MessageDetailState extends State<MessageDetail> {
                   )),
               const Spacer(),
               InkWell(
-                onTap:_pickAndSendImages,
+                onTap: _pickAndSendImages,
                 child: const Icon(
                   Icons.camera_alt,
                   color: Styles.blueIcon,
                 ),
-              ),
-              const Spacer(),
-              const Icon(
-                Icons.file_present,
-                color: Styles.blueIcon,
               ),
               const Spacer(),
               SizedBox(
@@ -367,22 +282,27 @@ class _MessageDetailState extends State<MessageDetail> {
             color: Styles.greyLight,
             child: Row(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Styles.light,
-                      child: Icon(
-                        Icons.headphones,
-                        size: 40,
+                InkWell(
+                  onTap: () {
+                    showSongsDialog(context, widget.chatID);
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Styles.light,
+                        child: Icon(
+                          Icons.headphones,
+                          size: 40,
+                        ),
                       ),
-                    ),
-                    Text(
-                      "Cùng nghe",
-                      style: context.theme.textTheme.headlineSmall,
-                    )
-                  ],
+                      Text(
+                        "Cùng nghe",
+                        style: context.theme.textTheme.headlineSmall,
+                      )
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -407,47 +327,28 @@ class _MessageDetailState extends State<MessageDetail> {
         .collection('messages')
         .doc();
 
-
     await messageRef.set({
-      'senderId': "hafqF9xuWgXLQ9keqCmembit2L43",
-      'receiverId': "user_demo",
+      'senderId': widget.currentUserId,
+      'receiverId': widget.receiverId,
+      'content': "",
+      'songId':"",
+      'songUrl':"",
+      'songUrlImg':"",
       'message': message,
       'imageUrls': imageUrls,
-      // 'audioUrl': audioUrl ?? "",
-      'audioUrl': "",
       'timestamp': FieldValue.serverTimestamp(),
     });
 
     await _fireStore.collection('chats').doc(widget.chatID).update({
-      'lastMessage': message.isNotEmpty ? message : (imageUrls.isNotEmpty ? "Đã gửi ảnh" : ""),
+      'lastMessage': message.isNotEmpty
+          ? message
+          : (imageUrls.isNotEmpty ? "Photo sent" : ""),
       'lastTimestamp': FieldValue.serverTimestamp(),
     });
   }
-  // void _sendMessage({List<String> imageUrls = const []}) async {
-  //   String message = _messageController.text.trim();
-  //   _messageController.clear();
-  //
-  //   var messageRef = _fireStore
-  //       .collection('chats')
-  //       .doc(widget.chatID)
-  //       .collection('messages')
-  //       .doc();
-  //
-  //   await messageRef.set({
-  //     'senderId': "hafqF9xuWgXLQ9keqCmembit2L43",
-  //     'receiverId': "user_demo",
-  //     'message': message,
-  //     'imageUrls': imageUrls,
-  //     'audioUrl': "",
-  //     'timestamp': FieldValue.serverTimestamp(),
-  //   });
-  //
-  //   await _fireStore.collection('chats').doc(widget.chatID).update({
-  //     'lastMessage': message.isNotEmpty ? message : (imageUrls.isNotEmpty ? "Đã gửi ảnh" : ""),
-  //     'lastTimestamp': FieldValue.serverTimestamp(),
-  //   });
-  // }
+
   final ImagePicker _picker = ImagePicker();
+
   Future<void> _pickAndSendImages() async {
     try {
       final List<XFile>? pickedFiles = await _picker.pickMultiImage();
@@ -455,9 +356,10 @@ class _MessageDetailState extends State<MessageDetail> {
 
       for (XFile file in pickedFiles) {
         String imageUrl = await _uploadImage(File(file.path));
-      setState(() {
-        imageUrls.add(imageUrl);
-      });}
+        setState(() {
+          imageUrls.add(imageUrl);
+        });
+      }
 
       _sendMessage();
     } catch (e) {
@@ -468,7 +370,8 @@ class _MessageDetailState extends State<MessageDetail> {
   Future<String> _uploadImage(File imageFile) async {
     try {
       String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      Reference ref = FirebaseStorage.instance.ref().child('images').child(fileName);
+      Reference ref =
+          FirebaseStorage.instance.ref().child('images').child(fileName);
 
       UploadTask uploadTask = ref.putFile(imageFile);
       TaskSnapshot snapshot = await uploadTask.whenComplete(() => {});
@@ -480,13 +383,17 @@ class _MessageDetailState extends State<MessageDetail> {
       rethrow;
     }
   }
+
   Widget _buildChatRow(
       {required String audioUrl,
+      required String titleSong,
+      required String songImg,
       required String message,
       required String chatID,
       required List<dynamic> img,
       required bool isMe,
       required String messageId}) {
+    // bool isCurrentVoicePlaying = (isPlaying && _currentPlayingUrl == audioUrl);
     return GestureDetector(
         onLongPress: () {
           _showDeleteMessageOptions(context, chatID, messageId, message);
@@ -496,13 +403,21 @@ class _MessageDetailState extends State<MessageDetail> {
               isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
           children: [
             if (!isMe)
-              const CircleAvatar(
-                backgroundImage: AssetImage(Asset.bgImageAvatar),
+              CircleAvatar(
+                backgroundImage: widget.imgOther != ""
+                    ? NetworkImage(widget.imgOther)
+                    : const AssetImage(Asset.bgImageAvatarUser)
+                        as ImageProvider,
               ),
             SizedBox(
               child: ChatBubble(
-                isPlaying: false,
-                onPressed: () {},
+                // isPlaying: isCurrentVoicePlaying,
+                songImg:songImg ,
+                titleSong: titleSong,
+                isPlaying: isPlaying,
+                onPressed: () {
+                  playAudio(audioUrl);
+                },
                 message: message,
                 img: img,
                 isMe: isMe,
@@ -511,6 +426,40 @@ class _MessageDetailState extends State<MessageDetail> {
             ),
           ],
         ));
+  }
+
+  final AudioPlayer audioPlayer = AudioPlayer();
+  bool isPlaying = false;
+  String? _currentPlayingUrl;
+
+  Future<void> playAudio(String url) async {
+    if(isPlaying){
+      setState(() {
+        isPlaying = true;
+      });
+    }else{
+      setState(() {
+        isPlaying = false;
+      });
+    }
+    if (isPlaying && _currentPlayingUrl == url) {
+      // Nếu nhạc đang phát và URL giống nhau, thì dừng
+      await audioPlayer.stop();
+      setState(() {
+        isPlaying = false;
+        _currentPlayingUrl = null;
+      });
+    } else {
+      // Dừng nhạc hiện tại
+      await audioPlayer.stop();
+      await audioPlayer.setUrl(url);
+      // Phát nhạc
+      await audioPlayer.play();
+      setState(() {
+        isPlaying = true;
+        _currentPlayingUrl = url;
+      });
+    }
   }
 
   void _showDeleteMessageOptions(BuildContext context, String chatID,
@@ -526,20 +475,19 @@ class _MessageDetailState extends State<MessageDetail> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Tùy chọn tin nhắn',
+                'Message options',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
               ListTile(
                 leading: const Icon(Icons.delete, color: Colors.red),
                 title: Text(selectedMessages.isNotEmpty
-                    ? 'Xóa ${selectedMessages.length} tin nhắn'
-                    : 'Xóa tin nhắn'),
+                    ? 'Delete ${selectedMessages.length} messages'
+                    : 'Delete message'),
                 onTap: () {
                   if (selectedMessages.isNotEmpty) {
                     _deleteSelectedMessages(chatID);
                   } else {
-                    print(messageId);
                     _deleteMessage(chatID, messageId);
                   }
                   Navigator.pop(context);
@@ -548,7 +496,7 @@ class _MessageDetailState extends State<MessageDetail> {
               ListTile(
                 leading:
                     const Icon(Icons.checklist_outlined, color: Colors.blue),
-                title: const Text('Chọn nhiều tin nhắn'),
+                title: const Text('Select multiple messages'),
                 onTap: () {
                   setState(() {
                     isSelecting = true;
@@ -559,9 +507,9 @@ class _MessageDetailState extends State<MessageDetail> {
               if (selectedMessages.isEmpty)
                 ListTile(
                   leading: const Icon(Icons.copy, color: Colors.blue),
-                  title: const Text('Sao chép tin nhắn'),
+                  title: const Text('Copy message'),
                   onTap: () {
-                    // Clipboard.setData(ClipboardData(text: messageData));
+                    Clipboard.setData(ClipboardData(text: messageData));
                     Navigator.pop(context);
                   },
                 ),
@@ -594,5 +542,74 @@ class _MessageDetailState extends State<MessageDetail> {
         .collection('messages')
         .doc(messageId)
         .delete();
+  }
+
+  Future<void> showSongsDialog(BuildContext context, String roomId) async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Chọn bài hát'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance.collection('db_songs').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final songs = snapshot.data!.docs;
+
+                return ListView.builder(
+                  itemCount: songs.length,
+                  itemBuilder: (context, index) {
+                    final song = songs[index];
+                    return ListTile(
+                      leading: Image.network(
+                        song['image_url'],
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                      ),
+                      title: Text(song['title']),
+                      subtitle: Text(song['artist']),
+                      onTap: () async {
+                        await FirebaseFirestore.instance
+                            .collection('chats')
+                            .doc(roomId)
+                            .collection('messages')
+                            .add({
+                          'senderId': widget.currentUserId,
+                          'receiverId': widget.receiverId,
+                          'imageUrls': [],
+                          "message": "",
+                          "songUrlImg":"${song['image_url']}",
+                          'timestamp': FieldValue.serverTimestamp(),
+                          'content': '🎵 ${song['title']} - ${song['artist']}',
+                          'songId': song.id,
+                          'songUrl': song['song_url'],
+                        });
+
+                        Navigator.of(context).pop(); // Đóng dialog
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Đóng dialog
+              },
+              child: Text('Đóng'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
