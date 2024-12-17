@@ -47,6 +47,7 @@ class _MessageDetailState extends State<MessageDetail> {
 
   @override
   Widget build(BuildContext context) {
+    print(widget.chatID);
     return GestureDetector(
       onTap: () => AuthService().hideKeyBoard(),
       child: Scaffold(

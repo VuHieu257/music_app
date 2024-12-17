@@ -154,7 +154,9 @@ void createNewChat(BuildContext context, String currentUserId,
 
     await chatDocRef.set({
       'participants': [currentUserId, otherUserId],
-      'lastMessage': '',
+      'lastMessage': 'no conversations yet',
+      'isGroup': false,
+      'groupName': "",
       'lastTimestamp': FieldValue.serverTimestamp(),
     });
 
@@ -164,7 +166,7 @@ void createNewChat(BuildContext context, String currentUserId,
         builder: (context) => MessageDetail(
           currentUserId: currentUserId,
           name: name,
-          chatID: chatId,
+          chatID: chatDocRef.id,
           receiverId: otherUserId,
           receiverName: name, imgOther: img,
         ),
@@ -172,6 +174,26 @@ void createNewChat(BuildContext context, String currentUserId,
     );
   }
 }
+
+
+void createNewGroupChat(BuildContext context, String currentUserId,
+    List<Map<String, dynamic>> selectedUsers, String groupName) async {
+  final chatDocRef = _firestore.collection('chats').doc();
+
+  // Lấy danh sách ID người dùng đã chọn và thêm currentUserId
+  List<String> participants =
+  selectedUsers.map((user) => user['id'] as String).toList();
+  participants.add(currentUserId);
+
+  await chatDocRef.set({
+    'participants': participants,
+    'groupName': groupName,
+    'isGroup': true,
+    'lastMessage': 'no conversations yet',
+    'lastTimestamp': FieldValue.serverTimestamp(),
+  });
+}
+
 Future<void> addUser(String userId, String name, String email) async {
   CollectionReference users = FirebaseFirestore.instance.collection('users');
 

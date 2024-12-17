@@ -1,13 +1,18 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:music_app/core/size/size.dart';
 import 'package:music_app/core/themes/theme_extensions.dart';
 import 'package:music_app/pages/screens/user_profile/downloads/download_screen.dart';
 import 'package:music_app/pages/screens/user_profile/favorites/favorites.dart';
 import 'package:music_app/pages/screens/user_profile/personal_playlists/personal_playlists_screen.dart';
+import 'package:music_app/pages/screens/user_profile/playlist_screen/playlist%20_screen/provider.dart';
+import 'package:music_app/pages/screens/user_profile/playlist_screen/playlist_detail_screen.dart';
 import 'package:music_app/pages/screens/user_profile/premium/premium_screen.dart';
 import 'package:music_app/pages/screens/user_profile/recent_played/recent_played_screen.dart';
 import 'package:music_app/pages/screens/user_profile/setting/setting_screen.dart';
 import 'package:music_app/pages/screens/user_profile/upload/upload_screen.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/assets.dart';
 import '../../../core/colors/color.dart';
@@ -22,6 +27,15 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   bool isCheck=false;
+  final user=FirebaseAuth.instance.currentUser?.uid;
+
+  @override
+  void initState() {
+    super.initState();
+    final provider = Provider.of<PlaylistAddProvider>(context, listen: false);
+    provider.fetchPlaylists("$user");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,46 +67,108 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 30,
-                    backgroundImage: AssetImage(
-                        Asset.bgImageAvatar
-                    ), // Example image
-                  ),
-                  SizedBox(width: context.height*0.01),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(width:context.width*0.5,child: Text('phanhien.123',style: context.theme.textTheme.headlineMedium?.copyWith(
-                          overflow: TextOverflow.ellipsis
-                      ),)),
-                      SizedBox(
-                        width: context.width*0.55,
-                        child: Row(
-                          children: [
-                            SizedBox(width: context.width*0.27,child: Text('0',style: context.theme.textTheme.titleMedium?.copyWith(
-                                color: Styles.grey
-                            ),textAlign: TextAlign.center)),
-                            SizedBox(width: context.width*0.27,child: Text('0',style: context.theme.textTheme.titleMedium?.copyWith(
-                                color: Styles.grey
-                            ),textAlign: TextAlign.center)),
-                          ],
-                        ),),
-                      SizedBox(
-                        width: context.width*0.55,
-                        child: Row(
-                          children: [
-                            SizedBox(width: context.width*0.27,child: Text('Đang theo dõi',style: context.theme.textTheme.titleMedium?.copyWith(
-                                color: Styles.grey
-                            ),textAlign: TextAlign.start)),
-                            const Spacer(),
-                            SizedBox(width: context.width*0.27,child: Text('Người theo dõi',style: context.theme.textTheme.titleMedium?.copyWith(
-                                color: Styles.grey
-                            ),textAlign: TextAlign.start)),
-                          ],
-                        ),
-                      ),
-                    ],
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('db_user')
+                        .doc("hafqF9xuWgXLQ9keqCmembit2L43") // ID user
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return const Center(child: Text('Error loading user data'));
+                      } else if (!snapshot.hasData || !snapshot.data!.exists) {
+                        return const Center(child: Text('User data not found'));
+                      }
+
+                      final userData = snapshot.data!.data() as Map<String, dynamic>;
+
+                      final String username = userData['displayName'] ?? 'No Name';
+                      final int followingCount = userData['following_count'] ?? 0;
+                      final int followerCount = userData['follower_count'] ?? 0;
+                      final String avatarUrl = userData['img'] ?? Asset.bgImageAvatar;
+
+                      return Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundImage: userData['img']!=''
+                                ? NetworkImage(userData['img'])
+                                : const AssetImage(Asset.bgImageAvatarUser) as ImageProvider, // Avatar local
+                          ),
+                          SizedBox(width: context.height * 0.01),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: context.width * 0.5,
+                                child: Text(
+                                  username,
+                                  style: context.theme.textTheme.headlineMedium?.copyWith(
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: context.width * 0.55,
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: context.width * 0.27,
+                                      child: Text(
+                                        '$followingCount',
+                                        style: context.theme.textTheme.titleMedium?.copyWith(
+                                          color: Styles.grey,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: context.width * 0.27,
+                                      child: Text(
+                                        '$followerCount',
+                                        style: context.theme.textTheme.titleMedium?.copyWith(
+                                          color: Styles.grey,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                width: context.width * 0.55,
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: context.width * 0.27,
+                                      child: Text(
+                                        'Đang theo dõi',
+                                        style: context.theme.textTheme.titleMedium?.copyWith(
+                                          color: Styles.grey,
+                                        ),
+                                        textAlign: TextAlign.start,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    SizedBox(
+                                      width: context.width * 0.27,
+                                      child: Text(
+                                        'Người theo dõi',
+                                        style: context.theme.textTheme.titleMedium?.copyWith(
+                                          color: Styles.grey,
+                                        ),
+                                        textAlign: TextAlign.start,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const Spacer(),
                   InkWell(
@@ -224,9 +300,55 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 },
               ),
             ),
-            InkWell(onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const PersonalPlaylistsScreen(),));
-            },child: _buildPlaylistItem('Chill', Asset.bgImageMusic)),
+            // InkWell(onTap: () {
+            //   Navigator.push(context, MaterialPageRoute(builder: (context) => const PersonalPlaylistsScreen(),));
+            // },child: _buildPlaylistItem('Chill', Asset.bgImageMusic)),
+            Consumer<PlaylistAddProvider>(
+              builder: (context, provider, child) {
+                return ListView.builder(
+                  shrinkWrap: true,
+                  primary: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: provider.playlists.length,
+                  itemBuilder: (context, index) {
+                    final playlist = provider.playlists[index];
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8.0,horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12.0),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 4.0,
+                            offset: Offset(2, 2),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        leading:
+                        Container(
+                          height: context.height*0.1,
+                          width: context.height*0.1,
+                          decoration: const BoxDecoration(
+                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                              color: Styles.greyLight,
+                              image: DecorationImage(image: AssetImage(Asset.bgImageMusic),fit: BoxFit.fitWidth)
+                          ),
+                        ),
+                        title: Text(playlist['name']),
+                        subtitle: Text("${playlist['songs'].length} songs"),
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => PlaylistDetailScreen(id: playlist.id,songsPlay:provider.playlists)));
+                        },
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 200,)
           ],
         ),
       ),

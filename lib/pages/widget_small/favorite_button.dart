@@ -79,13 +79,13 @@ class _FavoriteButtonState extends State<FavoriteButton> {
           ),
           onPressed: _toggleFavorite,
         ),
-        const SizedBox(width: 5,),
-        InkWell(
-            onTap: () {
-              showShareOptions(context);
-            },
-            child: Icon(Icons.share,
-                color: context.theme.iconTheme.color)),
+      //   const SizedBox(width: 5,),
+      //   InkWell(
+      //       onTap: () {
+      //         showShareOptions(context);
+      //       },
+      //       child: Icon(Icons.share,
+      //           color: context.theme.iconTheme.color)),
       ],
     );
   }

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:music_app/core/colors/color.dart';
 import 'package:music_app/core/size/size.dart';
@@ -19,7 +20,7 @@ class ScheduleScreen extends StatelessWidget {
           children: [
             const Spacer(),
             Center(
-              child: Text("Lịch cá nhân",style: context.theme.textTheme.headlineLarge?.copyWith(color: Styles.blueIcon,fontWeight: FontWeight.bold,fontSize: 26),),
+              child: Text("Schedule",style: context.theme.textTheme.headlineLarge?.copyWith(color: Styles.blueIcon,fontWeight: FontWeight.bold,fontSize: 26),),
             ),
             const Spacer(),
             InkWell(
@@ -31,18 +32,116 @@ class ScheduleScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-            padding:EdgeInsets.all(Styles.defaultPadding),
-            child: ListView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              primary: true,
-              shrinkWrap: true,
-              itemCount: 6,
-              itemBuilder: (context, index) {
-              return customSchedule(context,"If every day at $index:30AM, then follow a playlist","by phanhien.123");
-            },),
-        ),
+      body:  StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('music_schedules')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(
+              child: Text(
+                "No schedules available",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+              ),
+            );
+          }
+
+          final schedules = snapshot.data!.docs;
+
+          return ListView.builder(
+            itemCount: schedules.length,
+            itemBuilder: (context, index) {
+              final schedule = schedules[index];
+              final data = schedule.data() as Map<String, dynamic>;
+
+              return Card(
+                margin:
+                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Thời gian
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Time:",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            data['time'] ?? '',
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w400),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Tâm trạng
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Mood:",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            data['mood'] ?? '',
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w400),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Các ngày trong tuần
+                      const Text(
+                        "Days of the Week:",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        (data['selectedDays'] as List<dynamic>?)
+                            ?.join(', ') ??
+                            'No days selected',
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w400),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Ngày tạo
+                      const Text(
+                        "Created At:",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        data['createdAt'] != null
+                            ? (data['createdAt'] as Timestamp)
+                            .toDate()
+                            .toString()
+                            : 'N/A',
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w400),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

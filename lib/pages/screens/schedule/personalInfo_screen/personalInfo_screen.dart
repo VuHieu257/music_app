@@ -42,7 +42,6 @@ class PersonalInfoScreen extends StatelessWidget {
               const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: () {
-                  // Handle change avatar button
                 },
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.black, backgroundColor: Colors.grey[200],

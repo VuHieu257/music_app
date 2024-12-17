@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:music_app/core/assets.dart';
 import 'package:music_app/core/colors/color.dart';
@@ -16,6 +17,8 @@ class AddScheduleScreen extends StatefulWidget {
 
 class _AddScheduleScreenState extends State<AddScheduleScreen> {
   String? selectedTime = '7:30 PM';
+  String? selectedMood;
+
   Map<String, bool> daysOfWeek = {
     'Monday': true,
     'Tuesday': false,
@@ -25,6 +28,62 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
     'Saturday': false,
     'Sunday': false,
   };
+  List<String> moods = ['Relaxed', 'Happy', 'Focused', 'Sad', 'Energetic'];
+  List<String> fullDayTimes = []; // Danh sách thời gian 24 giờ
+
+  @override
+  void initState() {
+    super.initState();
+    _generateFullDayTimes();
+  }
+
+  void _generateFullDayTimes() {
+    for (int hour = 0; hour < 24; hour++) {
+      for (int minute = 0; minute < 60; minute += 30) {
+        final formattedTime =
+            '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+        fullDayTimes.add(formattedTime);
+      }
+    }
+    setState(() {
+      selectedTime = fullDayTimes.first;
+    });
+  }
+  Future<void> uploadMusicSchedule() async {
+    try {
+      if (selectedTime == null || selectedMood == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Please choose the time and mood!")),
+        );
+        return;
+      }
+
+      // Lọc ra các ngày được chọn
+      List<String> selectedDays = daysOfWeek.entries
+          .where((entry) => entry.value)
+          .map((entry) => entry.key)
+          .toList();
+
+      Map<String, dynamic> data = {
+        'time': selectedTime,
+        'selectedDays': selectedDays,
+        'mood': selectedMood,
+        'createdAt': Timestamp.now(),
+      };
+
+      await FirebaseFirestore.instance.collection('music_schedules').add(data);
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("The music plan has been successfully created!")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Lỗi: $e")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +102,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
             const Spacer(),
             Center(
               child: Text(
-                "Lịch cá nhân",
+                "Schedule",
                 style: context.theme.textTheme.headlineLarge
                     ?.copyWith(fontWeight: FontWeight.w400),
               ),
@@ -94,16 +153,13 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
               const SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
-                  color: Styles.greyLight, // Set the background color to white
-                  borderRadius:
-                      BorderRadius.circular(8.0), // Optional: Add border radius
+                  color: Colors.grey[200], // Set màu nền
+                  borderRadius: BorderRadius.circular(8.0),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                // Add padding inside the container
                 child: DropdownButton<String>(
                   value: selectedTime,
-                  items: <String>['7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM']
-                      .map((String value) {
+                  items: fullDayTimes.map((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
                       child: Text(value),
@@ -115,10 +171,65 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
                     });
                   },
                   isExpanded: true,
-                  underline: SizedBox(),
-                  // Removes the default underline
-                  dropdownColor:
-                      Colors.white, // Set the dropdown menu color to white
+                  underline: const SizedBox(),
+                  dropdownColor: Colors.white,
+                ),
+              ),
+              // Container(
+              //   decoration: BoxDecoration(
+              //     color: Styles.greyLight, // Set the background color to white
+              //     borderRadius:
+              //         BorderRadius.circular(8.0), // Optional: Add border radius
+              //   ),
+              //   padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              //   // Add padding inside the container
+              //   child: DropdownButton<String>(
+              //     value: selectedTime,
+              //     items: <String>['7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM', '9:30 PM', '10:30 PM','11:00 PM','11:30 PM', '12:00 PM', '12:30 PM', '13:00 PM', '13:30 PM', '14:00 PM']
+              //         .map((String value) {
+              //       return DropdownMenuItem<String>(
+              //         value: value,
+              //         child: Text(value),
+              //       );
+              //     }).toList(),
+              //     onChanged: (String? newValue) {
+              //       setState(() {
+              //         selectedTime = newValue;
+              //       });
+              //     },
+              //     isExpanded: true,
+              //     underline: const SizedBox(),
+              //     // Removes the default underline
+              //     dropdownColor:
+              //         Colors.white, // Set the dropdown menu color to white
+              //   ),
+              // ),
+              const SizedBox(height: 8),
+              const Text('Mood',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButton<String>(
+                  value: selectedMood,
+                  hint: const Text("Select Mood"),
+                  isExpanded: true,
+                  underline: const SizedBox(),
+                  items: moods
+                      .map((mood) => DropdownMenuItem(
+                            value: mood,
+                            child: Text(mood),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedMood = value;
+                    });
+                  },
                 ),
               ),
               const SizedBox(height: 16),
@@ -144,11 +255,12 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
               }),
               InkWell(
                   onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RecommentPlaylistScreen(),
-                        ));
+                    uploadMusicSchedule();
+                    // Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(
+                    //       builder: (context) => const RecommentPlaylistScreen(),
+                    //     ));
                   },
                   child: CusButton(
                     text: "Create",

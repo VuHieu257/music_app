@@ -3,57 +3,6 @@ import 'package:music_app/core/size/size.dart';
 import 'package:music_app/core/themes/theme_extensions.dart';
 
 import '../../core/colors/color.dart';
-// class CustomMusic extends StatelessWidget {
-//  final String img;
-//  final String rank;
-//  final String nameMusic;
-//  final String singer;
-//  final IconData icon;
-//   const CustomMusic({super.key, required this.img, required this.rank, required this.nameMusic, required this.singer, required this.icon});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       children: [
-//         Container(
-//           width:context.height*0.1,
-//           height:context.height*0.1,
-//           margin: const EdgeInsets.only(right: 15,top: 10),
-//           alignment: Alignment.bottomRight,
-//           decoration: BoxDecoration(
-//               borderRadius: const BorderRadius.all(Radius.circular(8)),
-//               image: DecorationImage(
-//                   image: AssetImage(img),
-//                   fit: BoxFit.fitHeight
-//               )
-//           ),
-//         ),
-//         Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Row(
-//               children: [
-//                 Text(rank,style: context.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),),
-//                 SizedBox(width: context.width*0.01,),
-//                 SizedBox(width:context.width*0.55,child:Text(nameMusic,style: context.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold,overflow: TextOverflow.ellipsis),)),
-//               ],
-//             ),
-//             Row(
-//               children: [
-//                 Icon(icon,size: 15,color: Styles.grey,),
-//                 SizedBox(width: context.width*0.01,),
-//                 SizedBox(width:context.width*0.55,
-//                     child:Text(singer,style: context.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold,color: Styles.grey),overflow: TextOverflow.ellipsis),),
-//               ],
-//             ),
-//           ],
-//         ),
-//         const Spacer(),
-//         const Icon(Icons.more_horiz)
-//       ],
-//     );
-//   }
-// }
 class CustomMusic extends StatelessWidget {
   final String img;
   final String rank;

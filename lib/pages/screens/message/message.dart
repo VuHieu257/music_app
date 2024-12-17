@@ -22,12 +22,15 @@ class MessageScreen extends StatefulWidget {
 
 class _MessageScreenState extends State<MessageScreen> {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
   String formatTimestamp(Timestamp timestamp) {
     DateTime dateTime = timestamp.toDate();
     return DateFormat('hh:mm a').format(dateTime); // dd/MM/yyyy hh:mm AM/PM
   }
+
   final user = FirebaseAuth.instance.currentUser?.uid;
   String _searchKeyword = "";
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -59,30 +62,27 @@ class _MessageScreenState extends State<MessageScreen> {
         ),
         body: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.all(Styles.defaultPadding),
+            padding: EdgeInsets.all(8.0),
             child: Column(
               children: [
-                // Search Bar
                 TextField(
                   onChanged: (value) {
                     setState(() {
                       _searchKeyword = value.toLowerCase();
                     });
                   },
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
-                    border: const OutlineInputBorder(
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(10)),
                     ),
                     hintText: "Search",
-                    hintStyle: context.theme.textTheme.headlineSmall,
                   ),
                 ),
+                const SizedBox(height: 10),
+                // Chat List
                 SizedBox(
-                  height: context.height * 0.02,
-                ),
-                SizedBox(
-                  height: context.height * 0.8,
+                  height: MediaQuery.of(context).size.height * 0.8,
                   child: StreamBuilder(
                     stream: firestore
                         .collection('chats')
@@ -106,108 +106,302 @@ class _MessageScreenState extends State<MessageScreen> {
                         itemCount: chatDocs.length,
                         itemBuilder: (context, index) {
                           var chat = chatDocs[index];
-                          var participants = chat['participants'] as List;
-                          String otherUserId =
-                              participants.firstWhere((id) => id != user);
 
-                          return FutureBuilder(
-                            future: firestore
-                                .collection('db_user')
-                                .doc(otherUserId)
-                                .get(),
-                            builder: (context,
-                                AsyncSnapshot<
-                                        DocumentSnapshot<Map<String, dynamic>>>
-                                    userSnapshot) {
-                              if (userSnapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                    child: CircularProgressIndicator());
-                              }
+                          if (chat['isGroup'] == true) {
+                            String groupName =
+                                chat['groupName'] ?? "Unnamed Group";
+                            String formattedTimestamp =
+                                chat['lastTimestamp'] != null
+                                    ? formatTimestamp(chat['lastTimestamp'])
+                                    : "No timestamp";
 
-                              if (!userSnapshot.hasData ||
-                                  !(userSnapshot.data?.exists ?? false)) {
-                                return const SizedBox.shrink();
-                              }
+                            if (_searchKeyword.isNotEmpty &&
+                                !groupName
+                                    .toLowerCase()
+                                    .contains(_searchKeyword)) {
+                              return const SizedBox.shrink();
+                            }
 
-                              var userData = userSnapshot.data!.data()!;
-                              String otherUserName =
-                                  userData['displayName']?.toLowerCase() ??
-                                      "Unknown User";
-
-                              // Lọc theo từ khóa tìm kiếm
-                              if (_searchKeyword.isNotEmpty &&
-                                  !otherUserName
-                                      .contains(_searchKeyword.toLowerCase())) {
-                                return const SizedBox.shrink();
-                              }
-
-                              String imgOther = userData['img'] ?? "";
-                              String formattedTimestamp =
-                                  chat['lastTimestamp'] != null
-                                      ? formatTimestamp(chat['lastTimestamp'])
-                                      : "No timestamp";
-
-                              return Slidable(
-                                key: ValueKey(chat.id),
-                                endActionPane: ActionPane(
-                                  motion: const ScrollMotion(),
-                                  children: [
-                                    SlidableAction(
-                                      onPressed: (context) =>
-                                          customShowBottomSheet(context),
-                                      icon: Icons.notifications,
-                                      label: "Notification",
-                                    ),
-                                    SlidableAction(
-                                      onPressed: (context) =>
-                                          doNothing(context, chat.id),
-                                      icon: Icons.delete,
-                                      label: "Xóa",
-                                    ),
-                                  ],
+                            return ListTile(
+                              leading: const CircleAvatar(
+                                radius: 30,
+                                child: Icon(
+                                  Icons.group,
+                                  size: 40,
                                 ),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    radius: 30,
-                                    backgroundImage:
-                                        userData['profilePicture'] != null
-                                            ? NetworkImage(
-                                                userData['profilePicture'])
-                                            : const AssetImage(
-                                                    Asset.bgImageAvatarUser)
-                                                as ImageProvider,
+                              ),
+                              title: Text(groupName),
+                              subtitle: Text(
+                                chat['lastMessage'] ?? "No messages",
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                              trailing: Text(formattedTimestamp),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MessageDetail(
+                                      chatID: chat.id,
+                                      currentUserId: "$user",
+                                      name: groupName,
+                                      receiverId: chat.id,
+                                      receiverName: groupName,
+                                      imgOther: '',
+                                    ),
                                   ),
-                                  title: Text(otherUserName),
-                                  subtitle: Text(
-                                      chat['lastMessage'] ?? "No messages",
-                                      style: context.theme.textTheme.titleMedium
-                                          ?.copyWith(color: Styles.grey)),
-                                  trailing: Text(formattedTimestamp),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => MessageDetail(
-                                          chatID: chat.id,
-                                          currentUserId: "$user",
-                                          imgOther: imgOther,
-                                          name: otherUserName,
-                                          receiverId: otherUserId,
-                                          receiverName: otherUserName,
-                                        ),
+                                );
+                              },
+                            );
+                          } else {
+                            var participants = chat['participants'] as List;
+                            String otherUserId =
+                                participants.firstWhere((id) => id != user);
+
+                            return FutureBuilder(
+                              future: firestore
+                                  .collection('db_user')
+                                  .doc(otherUserId)
+                                  .get(),
+                              builder: (context,
+                                  AsyncSnapshot<
+                                          DocumentSnapshot<
+                                              Map<String, dynamic>>>
+                                      userSnapshot) {
+                                if (userSnapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                }
+
+                                if (!userSnapshot.hasData ||
+                                    !(userSnapshot.data?.exists ?? false)) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                var userData = userSnapshot.data!.data()!;
+                                String otherUserName =
+                                    userData['displayName']?.toLowerCase() ??
+                                        "Unknown User";
+
+                                // Lọc theo từ khóa tìm kiếm
+                                if (_searchKeyword.isNotEmpty &&
+                                    !otherUserName.contains(
+                                        _searchKeyword.toLowerCase())) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                String imgOther = userData['img'] ?? "";
+                                String formattedTimestamp =
+                                    chat['lastTimestamp'] != null
+                                        ? formatTimestamp(chat['lastTimestamp'])
+                                        : "No timestamp";
+
+                                return Slidable(
+                                  key: ValueKey(chat.id),
+                                  endActionPane: ActionPane(
+                                    motion: const ScrollMotion(),
+                                    children: [
+                                      SlidableAction(
+                                        onPressed: (context) =>
+                                            customShowBottomSheet(context),
+                                        icon: Icons.notifications,
+                                        label: "Notification",
                                       ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          );
+                                      SlidableAction(
+                                        onPressed: (context) =>
+                                            doNothing(context, chat.id),
+                                        icon: Icons.delete,
+                                        label: "Xóa",
+                                      ),
+                                    ],
+                                  ),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      radius: 30,
+                                      backgroundImage:
+                                          userData['profilePicture'] != null
+                                              ? NetworkImage(
+                                                  userData['profilePicture'])
+                                              : const AssetImage(
+                                                      Asset.bgImageAvatarUser)
+                                                  as ImageProvider,
+                                    ),
+                                    title: Text(otherUserName),
+                                    subtitle: Text(
+                                        chat['lastMessage'] ?? "No messages",
+                                        style: context
+                                            .theme.textTheme.titleMedium
+                                            ?.copyWith(color: Styles.grey)),
+                                    trailing: Text(formattedTimestamp),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => MessageDetail(
+                                            chatID: chat.id,
+                                            currentUserId: "$user",
+                                            imgOther: imgOther,
+                                            name: otherUserName,
+                                            receiverId: otherUserId,
+                                            receiverName: otherUserName,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            );
+                          }
                         },
                       );
                     },
                   ),
                 ),
+                // TextField(
+                //   onChanged: (value) {
+                //     setState(() {
+                //       _searchKeyword = value.toLowerCase();
+                //     });
+                //   },
+                //   decoration: InputDecoration(
+                //     prefixIcon: const Icon(Icons.search),
+                //     border: const OutlineInputBorder(
+                //       borderRadius: BorderRadius.all(Radius.circular(10)),
+                //     ),
+                //     hintText: "Search",
+                //     hintStyle: context.theme.textTheme.headlineSmall,
+                //   ),
+                // ),
+                // SizedBox(
+                //   height: context.height * 0.02,
+                // ),
+                // SizedBox(
+                //   height: context.height * 0.8,
+                //   child: StreamBuilder(
+                //     stream: firestore
+                //         .collection('chats')
+                //         .where('participants', arrayContains: user)
+                //         .orderBy('lastTimestamp', descending: true)
+                //         .snapshots(),
+                //     builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                //       if (snapshot.connectionState == ConnectionState.waiting) {
+                //         return const Center(child: CircularProgressIndicator());
+                //       }
+                //
+                //       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                //         return const Center(
+                //           child: Text("There are no conversations"),
+                //         );
+                //       }
+                //
+                //       var chatDocs = snapshot.data!.docs;
+                //
+                //       return ListView.builder(
+                //         itemCount: chatDocs.length,
+                //         itemBuilder: (context, index) {
+                //           var chat = chatDocs[index];
+                //           var participants = chat['participants'] as List;
+                //           String otherUserId =
+                //               participants.firstWhere((id) => id != user);
+                //           return FutureBuilder(
+                //             future: firestore
+                //                 .collection('db_user')
+                //                 .doc(otherUserId)
+                //                 .get(),
+                //             builder: (context,
+                //                 AsyncSnapshot<
+                //                         DocumentSnapshot<Map<String, dynamic>>>
+                //                     userSnapshot) {
+                //               if (userSnapshot.connectionState ==
+                //                   ConnectionState.waiting) {
+                //                 return const Center(
+                //                     child: CircularProgressIndicator());
+                //               }
+                //
+                //               if (!userSnapshot.hasData ||
+                //                   !(userSnapshot.data?.exists ?? false)) {
+                //                 return const SizedBox.shrink();
+                //               }
+                //
+                //               var userData = userSnapshot.data!.data()!;
+                //               String otherUserName =
+                //                   userData['displayName']?.toLowerCase() ??
+                //                       "Unknown User";
+                //
+                //               // Lọc theo từ khóa tìm kiếm
+                //               if (_searchKeyword.isNotEmpty &&
+                //                   !otherUserName
+                //                       .contains(_searchKeyword.toLowerCase())) {
+                //                 return const SizedBox.shrink();
+                //               }
+                //
+                //               String imgOther = userData['img'] ?? "";
+                //               String formattedTimestamp =
+                //                   chat['lastTimestamp'] != null
+                //                       ? formatTimestamp(chat['lastTimestamp'])
+                //                       : "No timestamp";
+                //
+                //               return Slidable(
+                //                 key: ValueKey(chat.id),
+                //                 endActionPane: ActionPane(
+                //                   motion: const ScrollMotion(),
+                //                   children: [
+                //                     SlidableAction(
+                //                       onPressed: (context) =>
+                //                           customShowBottomSheet(context),
+                //                       icon: Icons.notifications,
+                //                       label: "Notification",
+                //                     ),
+                //                     SlidableAction(
+                //                       onPressed: (context) =>
+                //                           doNothing(context, chat.id),
+                //                       icon: Icons.delete,
+                //                       label: "Xóa",
+                //                     ),
+                //                   ],
+                //                 ),
+                //                 child: ListTile(
+                //                   leading: CircleAvatar(
+                //                     radius: 30,
+                //                     backgroundImage:
+                //                         userData['profilePicture'] != null
+                //                             ? NetworkImage(
+                //                                 userData['profilePicture'])
+                //                             : const AssetImage(
+                //                                     Asset.bgImageAvatarUser)
+                //                                 as ImageProvider,
+                //                   ),
+                //                   title: Text(otherUserName),
+                //                   subtitle: Text(
+                //                       chat['lastMessage'] ?? "No messages",
+                //                       style: context.theme.textTheme.titleMedium
+                //                           ?.copyWith(color: Styles.grey)),
+                //                   trailing: Text(formattedTimestamp),
+                //                   onTap: () {
+                //                     Navigator.push(
+                //                       context,
+                //                       MaterialPageRoute(
+                //                         builder: (context) => MessageDetail(
+                //                           chatID: chat.id,
+                //                           currentUserId: "$user",
+                //                           imgOther: imgOther,
+                //                           name: otherUserName,
+                //                           receiverId: otherUserId,
+                //                           receiverName: otherUserName,
+                //                         ),
+                //                       ),
+                //                     );
+                //                   },
+                //                 ),
+                //               );
+                //             },
+                //           );
+                //         },
+                //       );
+                //     },
+                //   ),
+                // )
               ],
             ),
           ),
