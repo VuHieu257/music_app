@@ -60,10 +60,10 @@ class MadeForYouSection extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   fontSize: 26),),
             const Spacer(),
-            InkWell(onTap: () {
-              Navigator.push(context, MaterialPageRoute(
-                builder: (context) => const VoiceSearchScreen(),));
-            }, child: const Icon(Icons.mic_none, size: 30,),),
+            // InkWell(onTap: () {
+            //   Navigator.push(context, MaterialPageRoute(
+            //     builder: (context) => const VoiceSearchScreen(),));
+            // }, child: const Icon(Icons.mic_none, size: 30,),),
             SizedBox(width: context.width * 0.02,),
             InkWell(onTap: () {
               Navigator.push(context, MaterialPageRoute(

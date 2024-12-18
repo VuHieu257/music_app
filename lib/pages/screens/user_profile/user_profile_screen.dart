@@ -300,9 +300,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 },
               ),
             ),
-            // InkWell(onTap: () {
-            //   Navigator.push(context, MaterialPageRoute(builder: (context) => const PersonalPlaylistsScreen(),));
-            // },child: _buildPlaylistItem('Chill', Asset.bgImageMusic)),
             Consumer<PlaylistAddProvider>(
               builder: (context, provider, child) {
                 return ListView.builder(
