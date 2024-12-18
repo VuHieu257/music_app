@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:music_app/core/themes/theme_extensions.dart';
+import 'package:music_app/pages/screens/sign_In/sign_in.dart';
 
 import '../../../../core/colors/color.dart';
 import '../../../widget_small/bottom/show_custom_bottom/show_custom_bottom_sheet.dart';
@@ -116,14 +118,24 @@ class _SettingScreenState extends State<SettingScreen> {
                 fontWeight: FontWeight.bold
               ),),
               trailing: const Icon(Icons.logout),
-              onTap: () {
-                // Handle logout action
-              },
+              onTap:() => _logout(context),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    try {
+      await FirebaseAuth.instance.signOut(); // Đăng xuất người dùng
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const SignIn(),),(route) => false,);
+    } catch (e) {
+      debugPrint("Error logging out: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Logout failed: $e")),
+      );
+    }
   }
   void _showSoundQualityOptions() {
     showCustomSoundQualitySheet(
